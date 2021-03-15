@@ -9,10 +9,27 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 let mainWindow;
+let shareWindow;
 const winURL = process.env.NODE_ENV === 'development'
   ? 'http://localhost:9080'
   : `file://${__dirname}/index.html`;
 
+function createShareWindow() {
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  shareWindow = new BrowserWindow({
+    width: primaryDisplay.bounds.width,
+    height: primaryDisplay.bounds.height,
+    x: primaryDisplay.bounds.x,
+    y: primaryDisplay.bounds.y,
+    hide: true,
+    show: false,
+  });
+  shareWindow.loadURL('/sharedScreen');
+  shareWindow.on('ready-to-show', () => {
+    mainWindow.show();
+  });
+}
 function createWindow() {
   /**
    * Initial window options
@@ -32,7 +49,7 @@ function createWindow() {
       enableRemoteModule: true,
     },
   });
-
+  createShareWindow();
   mainWindow.loadURL(winURL);
 
   mainWindow.on('closed', () => {

@@ -39,7 +39,6 @@ import arrow from '../../../static/images/leftArrow.png';
 import Logo from '../../../static/images/logo.png';
 import screenTools from '../tools/screenTools';
 import socketTools from '../tools/socketTools';
-const randomize = require('randomatic');
 
 export default {
   name: 'multiScreen',
@@ -79,11 +78,11 @@ export default {
       // socketTools.createPeerConnection(stream);
     },
     async getRemoteScreenCode() {
+      if (!this.selectedScreenId) return;
       // 获取投屏码,创建房间号
       if (!this.Code) {
-        this.Code = randomize('A0', 6);
+        this.Code = await socketTools.createRemoteCode();
         localStorage.setItem('remoteCode', this.Code);
-        socketTools.registRemoteCode(this.Code);
       } else {
         this.Code = localStorage.getItem('remoteCode');
       }
