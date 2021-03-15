@@ -16,6 +16,11 @@ export default new Router({
       component: require('../pages/multiScreen').default,
     },
     {
+      path: '/sharedScreen',
+      name: 'SharedScreen',
+      component: require('../pages/sharedScreen').default,
+    },
+    {
       path: '*',
       redirect: '/',
     },

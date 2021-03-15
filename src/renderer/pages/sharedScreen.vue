@@ -1,10 +1,12 @@
 <template>
-
+  <div class="sharedScreen">
+    <video></video>
+  </div>
 </template>
 
 <script>
 export default {
-name: 'SharedScreen',
+  name: 'SharedScreen',
 };
 </script>
 

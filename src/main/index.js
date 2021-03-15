@@ -13,6 +13,9 @@ let shareWindow;
 const winURL = process.env.NODE_ENV === 'development'
   ? 'http://localhost:9080'
   : `file://${__dirname}/index.html`;
+const sharedScreenURL = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:9080/#/sharedScreen'
+  : `file://${__dirname}/index.html`;
 
 function createShareWindow() {
   const { screen } = require('electron');
@@ -22,13 +25,16 @@ function createShareWindow() {
     height: primaryDisplay.bounds.height,
     x: primaryDisplay.bounds.x,
     y: primaryDisplay.bounds.y,
-    hide: true,
     show: false,
+    hide: true,
+    useContentSize: true,
+    webPreferences: {
+      nodeIntegration: true,
+      enableRemoteModule: true,
+    },
   });
-  shareWindow.loadURL('/sharedScreen');
-  shareWindow.on('ready-to-show', () => {
-    mainWindow.show();
-  });
+  shareWindow.webContents.closeDevTools();
+  shareWindow.loadURL(sharedScreenURL);
 }
 function createWindow() {
   /**
