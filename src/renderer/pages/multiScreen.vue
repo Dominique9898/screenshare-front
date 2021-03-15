@@ -78,7 +78,7 @@ export default {
       // socketTools.createPeerConnection(stream);
     },
     async getRemoteScreenCode() {
-      if (!this.selectedScreenId) return;
+      if (this.isActivate === -1) return;
       // 获取投屏码,创建房间号
       if (!this.Code) {
         this.Code = await socketTools.createRemoteCode();

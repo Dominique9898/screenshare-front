@@ -1,6 +1,6 @@
 const io = require('socket.io-client');
-// const host = '121.4.130.218:3000';
-const host = 'http://localhost:3000';
+const host = '121.4.130.218:3000';
+// const host = 'http://localhost:3000';
 let socket = null;
 
 // 注册Socket监听
