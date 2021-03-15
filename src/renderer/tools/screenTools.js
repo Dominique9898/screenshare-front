@@ -1,32 +1,34 @@
 // 渲染进程中使用
-let primaryDisplay;
-let displays;
 /**
  * 获取屏幕信息
  * @returns {Electron.Display[]}
  */
-const { remote } = require('electron');
+const { desktopCapturer } = require('electron');
 
-const getAllDisplays = () => {
-  if (!displays) {
-    displays = remote.screen.getAllDisplays();
-    console.log('Displays', displays);
-  }
-  return displays;
+const getAllStream = async () => {
+  const sources = await desktopCapturer.getSources({
+    types: ['screen'],
+  });
+  return sources;
 };
 
-/**
- *
- * @returns {Electron.Display}
- */
-const getPrimaryDisplay = () => {
-  if (!primaryDisplay) {
-    primaryDisplay = remote.screen.getPrimaryDisplay();
-    console.log('primaryDisplay', primaryDisplay);
-  }
-  return primaryDisplay;
+const getStreamByScreenID = async (screenID) => {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      mandatory: {
+        chromeMediaSourceId: screenID,
+        chromeMediaSource: 'desktop',
+        minFrameRate: 30,
+        maxFrameRate: 60,
+      },
+    },
+  });
+  return stream;
 };
+
+
 export default {
-  getAllDisplays,
-  getPrimaryDisplay,
+  getAllStream,
+  getStreamByScreenID,
 };

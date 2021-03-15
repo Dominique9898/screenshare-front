@@ -7,7 +7,7 @@
         <div>Code</div>
         <input @focus="clearPlaceHold" @blur="recoverPlaceHold" id="codeInput" :placeholder="placeholderCode" />
       </div>
-      <div class="partBlock codeButton">开始投屏</div>
+      <div @click="enterRemoteRoom" class="partBlock codeButton">开始投屏</div>
       <div
           class="partBlock"
           style="height: 1px; background:linear-gradient(244deg,rgba(255,255,255,0) 0%,rgba(255,255,255,1) 50%,rgba(255,255,255,0) 100%)"
@@ -27,6 +27,7 @@
 import Logo from '../../../static/images/logo.png';
 import BreathBtn from '../components/breathBtn';
 import ControlBtns from '../components/controlBtns';
+import socketTools from '../tools/socketTools';
 
 export default {
   name: 'landing-page',
@@ -40,6 +41,10 @@ export default {
   methods: {
     toMultiScreen() {
       this.$router.push('/multiScreen');
+    },
+    enterRemoteRoom() {
+      const remoteCode = document.getElementById('codeInput').value;
+      socketTools.enterRemoteRoom(remoteCode);
     },
     clearPlaceHold() {
       this.placeholderCode = '';
@@ -60,6 +65,7 @@ export default {
   color: white;
   position: relative;
   user-select: none;
+  overflow: hidden;
 }
 .container {
   position: absolute;

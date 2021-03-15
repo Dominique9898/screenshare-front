@@ -1,11 +1,34 @@
 <template>
   <div class="multiScreen">
-    <img @click="returnHome" :src="leftarrow" alt="return" />
+    <img v-if="!this.Code" @click="returnHome" :src="leftarrow" alt="return" />
     <div class="container">
-      <img class="partBlock" id="logoPic" :src="logoPath" alt="logo" />
-      <div class="partBlock topContainer">
-        <div id="codeDisplay">{{ Code }}</div>
-        <div class="partBlock codeButton">生成投屏码</div>
+      <div content="partBlock topCantainer">
+        <div v-if="!this.Code">
+          <div
+              class="partBlock"
+              style="height: 1px; background:linear-gradient(244deg,rgba(255,255,255,0) 0%,rgba(255,255,255,1) 50%,rgba(255,255,255,0) 100%)"
+          ></div>
+          <img
+               :class="{active: index === isActivate}"
+               style="width: 100%;margin: 10px 0"
+               v-for="(stream, index) in streams.slice(0, 2)"
+               :src="stream.thumbnail.toDataURL()"
+               :key="stream.id"
+               @click="selectedScreen(index, stream.id)"
+               alt="logo" />
+          <div
+              class="partBlock"
+              style="height: 1px; background:linear-gradient(244deg,rgba(255,255,255,0) 0%,rgba(255,255,255,1) 50%,rgba(255,255,255,0) 100%)"
+          ></div>
+        </div>
+        <div v-else>
+          <img class="partBlock" id="logoPic" :src="logoPath" alt="logo" />
+        </div>
+      </div>
+      <div class="partBlock upperContainer">
+        <div v-if="this.Code" id="codeDisplay">{{ Code }}</div>
+        <div v-if="!this.Code" @click="getRemoteScreenCode" class="partBlock codeButton">生成投屏码</div>
+        <div v-if="this.Code" @click="disconnected" class="partBlock" id="disconnected">disconnected</div>
       </div>
     </div>
   </div>
@@ -14,25 +37,58 @@
 <script>
 import arrow from '../../../static/images/leftArrow.png';
 import Logo from '../../../static/images/logo.png';
-import ScreenTools from '../tools/screenTools';
+import screenTools from '../tools/screenTools';
+import socketTools from '../tools/socketTools';
+const randomize = require('randomatic');
+
 export default {
   name: 'multiScreen',
-  beforeCreate() {
-    ScreenTools.getPrimaryDisplay();
+  async created() {
+    this.streams = await screenTools.getAllStream(); // 1. 获取屏幕信息, 默认先投主屏幕
   },
   mounted() {
-
+    this.createPeerConnection();// 2. 建立pc连接和创建Offer
   },
   data() {
     return {
-      Code: '******',
+      Code: '',
+      isActivate: -1,
       leftarrow: arrow,
       logoPath: Logo,
+      streams: [],
+      selectedScreenId: '',
     };
   },
   methods: {
     returnHome() {
       this.$router.push('/');
+    },
+    disconnected() {
+      // 删除房间号
+      socketTools.disconnected(this.Code);
+      localStorage.removeItem('remoteCode');
+      this.Code = '';
+      this.returnHome();
+    },
+    selectedScreen(index, id) {
+      this.isActivate = index;
+      this.selectedScreenId = id;
+    },
+    async createPeerConnection() {
+      // const stream = await screenTools.getPrimaryDisplayStream();
+      // socketTools.createPeerConnection(stream);
+    },
+    async getRemoteScreenCode() {
+      // 获取投屏码,创建房间号
+      if (!this.Code) {
+        this.Code = randomize('A0', 6);
+        localStorage.setItem('remoteCode', this.Code);
+        socketTools.registRemoteCode(this.Code);
+      } else {
+        this.Code = localStorage.getItem('remoteCode');
+      }
+      const stream = await screenTools.getStreamByScreenID(this.selectedScreenId); // 获取屏幕ScreenID
+      console.log(stream);
     },
   },
 };
@@ -60,5 +116,17 @@ export default {
   border-radius: 4px;
   text-align: center;
   line-height: 40px;
+}
+#disconnected {
+  height: 10px;
+  text-align: center;
+  line-height: 10px;
+  cursor: pointer;
+}
+#disconnected:hover {
+  text-decoration: underline;
+}
+.active {
+  border: 2px solid #42b983;
 }
 </style>
