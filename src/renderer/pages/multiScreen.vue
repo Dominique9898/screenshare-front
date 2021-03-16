@@ -39,7 +39,6 @@ import arrow from '../../../static/images/leftArrow.png';
 import Logo from '../../../static/images/logo.png';
 import screenTools from '../tools/screenTools';
 import socketTools from '../tools/socketTools';
-const { ipcRenderer } = require('electron');
 const randomize = require('randomatic');
 
 export default {
@@ -63,9 +62,8 @@ export default {
       this.$router.push('/');
     },
     disconnected() {
-      // 删除房间号
+      // 删除投屏房间号
       socketTools.disconnected(this.Code, this.userId);
-      localStorage.removeItem('remoteCode');
       this.Code = '';
       this.returnHome();
     },
@@ -79,11 +77,7 @@ export default {
       if (!this.Code) {
         this.userId = `user:${randomize('Aa0', 6)}`;
         this.Code = await socketTools.createRemoteCode(this.userId);
-        localStorage.setItem('remoteCode', this.Code);
-      } else {
-        this.Code = localStorage.getItem('remoteCode');
       }
-      ipcRenderer.send('REMOTE_SCREEN_STREAM', this.selectedScreenId);
     },
   },
 };

@@ -1,14 +1,13 @@
+const { ipcRenderer } = require('electron');
 const io = require('socket.io-client');
 // const host = '121.4.130.218:3000';
 const host = 'http://localhost:3000';
-let socket = null;
-
-// 注册Socket监听
+let socket = null;// 注册Socket监听
 const CREATE_REMOTE_CODE = 'create-remote-code';
-// const CREATE_REMOTE_CODE_TEST = 'create-remote-code-test';
 const DELETE_REMOTE_CODE = 'delete-remote-code';
 const ENTER_REMOTE_ROOM = 'enter-remote-room';
-// const SEND_OFFER = 'send-offer';
+const LEAVE_REMOTE_ROOM = 'leave-remote-room';
+const SEND_OFFERSDP = 'send-offersdp';
 
 function createSocket() {
   if (!socket) {
@@ -16,17 +15,25 @@ function createSocket() {
     socket.on(DELETE_REMOTE_CODE, (userId) => {
       console.log(`${userId}断开连接`);
     });
+    socket.on(ENTER_REMOTE_ROOM, (remoteId, remoteCode, receviedId) => {
+      ipcRenderer.send('CLIENT_ENTER_REMOTE_ROOM', remoteCode, receviedId);
+      console.log(`${receviedId} 加入 ${remoteId} 的房间`);
+    });
   }
 }
 function closeSocket(remoteCode) {
   if (socket) {
     socket.emit('leave', remoteCode);
+    // socket.disconnect();
   }
 }
-function enterRemoteRoom(remoteCode, userID) {
+function enterRemoteRoom(remoteCode, userId) {
   createSocket();
-  // socket.emit(CREATE_REMOTE_CODE_TEST); // 测试使用,虚拟建立投屏码
-  socket.emit(ENTER_REMOTE_ROOM, remoteCode, userID); // 进入房间
+  socket.emit(ENTER_REMOTE_ROOM, remoteCode, userId); // 进入房间
+}
+function leaveRemoteRoom(remoteCode, userId) {
+  socket.emit(LEAVE_REMOTE_ROOM, remoteCode, userId); // 离开房间
+  socket.disconnect();
 }
 async function createRemoteCode(userId) {
   return new Promise((resolve) => {
@@ -36,32 +43,20 @@ async function createRemoteCode(userId) {
     });
   });
 }
-async function createPeerConnection(stream) {
-  // Connect to socket.io server
-  createSocket();
-  // const configuration = {
-  //   iceServers: [
-  //     {
-  //       urls: 'turn:121.4.130.218:3478',
-  //       username: 'dominik',
-  //       credential: '19989813wei.',
-  //     },
-  //     { url: 'stun:stun.l.google.com:19302' }, // 谷歌的公共服务
-  //   ],
-  //   iceCandidatePoolSize: 2,
-  // };
-  if (stream) {
-    // 初始化屏幕端peerConnection
-  }
-}
 
 function disconnected(code, userId) {
+  // 屏幕端取消投屏
   socket.emit(DELETE_REMOTE_CODE, code, userId);
+}
+
+function sendToServer(remotedCode, desc) {
+  socket.emit(SEND_OFFERSDP, remotedCode, desc);
 }
 export default {
   closeSocket,
   enterRemoteRoom,
+  leaveRemoteRoom,
   disconnected,
   createRemoteCode,
-  createPeerConnection,
+  sendToServer,
 };

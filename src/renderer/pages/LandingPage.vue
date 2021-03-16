@@ -29,30 +29,36 @@ import BreathBtn from '../components/breathBtn';
 import ControlBtns from '../components/controlBtns';
 import socketTools from '../tools/socketTools';
 const randomize = require('randomatic');
-
+const { ipcRenderer } = require('electron');
 export default {
   name: 'landing-page',
   components: { ControlBtns, BreathBtn },
+  created() {
+    this.userId = this.createUserId();
+  },
   data() {
     return {
       logoPath: Logo,
       placeholderCode: 'ABCDEFG',
+      userId: '',
     };
   },
   methods: {
     toMultiScreen() {
       this.$router.push('/multiScreen');
     },
+    createUserId() {
+      return `user:${randomize('Aa0', 6)}`;
+    },
     enterRemoteRoom() {
       const remoteCode = document.getElementById('codeInput').value;
-      const userId = `user:${randomize('Aa0', 6)}`;
-      socketTools.enterRemoteRoom(remoteCode, userId);
+      socketTools.enterRemoteRoom(remoteCode, this.userId);
     },
     clearPlaceHold() {
       this.placeholderCode = '';
     },
     recoverPlaceHold() {
-      this.placeholderCode = 'ABIDE';
+      this.placeholderCode = 'ABCDEF';
     },
   },
 };
