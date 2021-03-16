@@ -26,14 +26,13 @@ function createShareWindow() {
     x: primaryDisplay.bounds.x,
     y: primaryDisplay.bounds.y,
     show: false,
-    hide: true,
     useContentSize: true,
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true,
     },
   });
-  shareWindow.webContents.closeDevTools();
+  shareWindow.webContents.openDevTools();
   shareWindow.loadURL(sharedScreenURL);
 }
 function createWindow() {
@@ -70,6 +69,10 @@ function createWindow() {
   });
   ipcMain.on('WINDOW::ZOOMOUT', () => {
     mainWindow.minimize();
+  });
+  ipcMain.on('REMOTE_SCREEN_STREAM', (e, streamId) => {
+    console.log('streamId', streamId);
+    shareWindow.webContents.send('REMOTE_SCREEN_STREAM', streamId);
   });
 }
 

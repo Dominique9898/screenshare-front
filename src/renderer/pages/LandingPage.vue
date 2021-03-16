@@ -28,6 +28,7 @@ import Logo from '../../../static/images/logo.png';
 import BreathBtn from '../components/breathBtn';
 import ControlBtns from '../components/controlBtns';
 import socketTools from '../tools/socketTools';
+const randomize = require('randomatic');
 
 export default {
   name: 'landing-page',
@@ -44,7 +45,8 @@ export default {
     },
     enterRemoteRoom() {
       const remoteCode = document.getElementById('codeInput').value;
-      socketTools.enterRemoteRoom(remoteCode);
+      const userId = `user:${randomize('Aa0', 6)}`;
+      socketTools.enterRemoteRoom(remoteCode, userId);
     },
     clearPlaceHold() {
       this.placeholderCode = '';
