@@ -13,10 +13,15 @@ const ENTER_REMOTE_ROOM = 'enter-remote-room';
 function createSocket() {
   if (!socket) {
     socket = io(host);
+    socket.on(DELETE_REMOTE_CODE, (userId) => {
+      console.log(`${userId}断开连接`);
+    });
   }
 }
-function closeSocket() {
-  socket.close();
+function closeSocket(remoteCode) {
+  if (socket) {
+    socket.emit('leave', remoteCode);
+  }
 }
 function enterRemoteRoom(remoteCode, userID) {
   createSocket();
@@ -50,9 +55,8 @@ async function createPeerConnection(stream) {
   }
 }
 
-function disconnected(code) {
-  createSocket();
-  socket.emit(DELETE_REMOTE_CODE, code);
+function disconnected(code, userId) {
+  socket.emit(DELETE_REMOTE_CODE, code, userId);
 }
 export default {
   closeSocket,

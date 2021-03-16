@@ -55,7 +55,7 @@ export default {
       logoPath: Logo,
       selectedScreenId: '',
       streams: [],
-      userID: '',
+      userId: '',
     };
   },
   methods: {
@@ -64,7 +64,7 @@ export default {
     },
     disconnected() {
       // 删除房间号
-      socketTools.disconnected(this.Code);
+      socketTools.disconnected(this.Code, this.userId);
       localStorage.removeItem('remoteCode');
       this.Code = '';
       this.returnHome();
