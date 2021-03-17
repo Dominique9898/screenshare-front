@@ -57,7 +57,7 @@ function createWindow() {
   });
   createShareWindow();
   mainWindow.loadURL(winURL);
-
+  mainWindow.webContents.closeDevTools();
   shareWindow.on('closed', () => {
     shareWindow = null;
   });
