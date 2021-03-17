@@ -27,7 +27,6 @@
 import Logo from '../../../static/images/logo.png';
 import BreathBtn from '../components/breathBtn';
 import ControlBtns from '../components/controlBtns';
-import socketTools from '../tools/socketTools';
 const randomize = require('randomatic');
 const { ipcRenderer } = require('electron');
 export default {
@@ -52,7 +51,7 @@ export default {
     },
     enterRemoteRoom() {
       const remoteCode = document.getElementById('codeInput').value;
-      socketTools.enterRemoteRoom(remoteCode, this.userId);
+      ipcRenderer.send('ENTER_REMOTE_ROOM', remoteCode);
     },
     clearPlaceHold() {
       this.placeholderCode = '';

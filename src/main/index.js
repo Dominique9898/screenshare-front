@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain } from 'electron'; // eslint-disable-line
+import { app, BrowserWindow, ipcMain } from 'electron';
+import socketTools from '../renderer/tools/socketTools'; // eslint-disable-line
 
 /**
  * Set `__static` path to static files in production
@@ -57,6 +58,9 @@ function createWindow() {
   createShareWindow();
   mainWindow.loadURL(winURL);
 
+  shareWindow.on('closed', () => {
+    shareWindow = null;
+  });
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -66,13 +70,17 @@ function createWindow() {
 
   ipcMain.on('WINDOW::CLOSE', () => {
     mainWindow.close();
+    shareWindow.close();
   });
   ipcMain.on('WINDOW::ZOOMOUT', () => {
     mainWindow.minimize();
   });
-  ipcMain.on('REMOTE_SCREEN_STREAM', (e, streamId) => {
-    console.log('streamId', streamId);
-    shareWindow.webContents.send('REMOTE_SCREEN_STREAM', streamId);
+  ipcMain.on('ENTER_REMOTE_ROOM', (e, remoteCode) => {
+    console.log('ipcMain ENTER_REMOTE_ROOM', remoteCode);
+    shareWindow.webContents.send('ENTER_REMOTE_ROOM', remoteCode);
+  });
+  ipcMain.on('LEAVE_REMOTE_ROOM', () => {
+    shareWindow.webContents.send('LEAVE_REMOTE_ROOM');
   });
 }
 

@@ -3,7 +3,6 @@ const io = require('socket.io-client');
 // const host = '121.4.130.218:3000';
 const host = 'http://localhost:3000';
 let socket = null;// 注册Socket监听
-const CREATE_REMOTE_CODE = 'create-remote-code';
 const DELETE_REMOTE_CODE = 'delete-remote-code';
 const ENTER_REMOTE_ROOM = 'enter-remote-room';
 const LEAVE_REMOTE_ROOM = 'leave-remote-room';
@@ -27,27 +26,24 @@ function closeSocket(remoteCode) {
     // socket.disconnect();
   }
 }
-function enterRemoteRoom(remoteCode, userId) {
-  createSocket();
-  socket.emit(ENTER_REMOTE_ROOM, remoteCode, userId); // 进入房间
-}
-function leaveRemoteRoom(remoteCode, userId) {
-  socket.emit(LEAVE_REMOTE_ROOM, remoteCode, userId); // 离开房间
-  socket.disconnect();
-}
-async function createRemoteCode(userId) {
+function enterRemoteRoom(user) {
+  // // 进入房间
   return new Promise((resolve) => {
     createSocket();
-    socket.emit(CREATE_REMOTE_CODE, userId, (code) => {
-      resolve(code);
+    socket.emit(ENTER_REMOTE_ROOM, user, (user) => {
+      resolve(user); // 获取user信息
     });
   });
 }
-
-function disconnected(code, userId) {
-  // 屏幕端取消投屏
-  socket.emit(DELETE_REMOTE_CODE, code, userId);
+function leaveRemoteRoom(user) {
+  return new Promise((resolve) => {
+    createSocket();
+    socket.emit(LEAVE_REMOTE_ROOM, user, (user) => {
+      resolve(user); // 获取user信息
+    }); // 离开房间
+  });
 }
+
 
 function sendToServer(remotedCode, desc) {
   socket.emit(SEND_OFFERSDP, remotedCode, desc);
@@ -56,7 +52,5 @@ export default {
   closeSocket,
   enterRemoteRoom,
   leaveRemoteRoom,
-  disconnected,
-  createRemoteCode,
   sendToServer,
 };

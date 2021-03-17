@@ -38,9 +38,8 @@
 import arrow from '../../../static/images/leftArrow.png';
 import Logo from '../../../static/images/logo.png';
 import screenTools from '../tools/screenTools';
-import socketTools from '../tools/socketTools';
 const randomize = require('randomatic');
-
+const { ipcRenderer } = require('electron');
 export default {
   name: 'multiScreen',
   async created() {
@@ -63,8 +62,7 @@ export default {
     },
     disconnected() {
       // 删除投屏房间号
-      socketTools.disconnected(this.Code, this.userId);
-      this.Code = '';
+      ipcRenderer.send('LEAVE_REMOTE_ROOM');
       this.returnHome();
     },
     selectedScreen(index, id) {
@@ -73,11 +71,8 @@ export default {
     },
     async getRemoteScreenCode() {
       if (this.isActivate === -1) return;
-      // 获取投屏码,创建房间号
-      if (!this.Code) {
-        this.userId = `user:${randomize('Aa0', 6)}`;
-        this.Code = await socketTools.createRemoteCode(this.userId);
-      }
+      this.Code = randomize('A0', 6);
+      ipcRenderer.send('ENTER_REMOTE_ROOM', this.Code);
     },
   },
 };
