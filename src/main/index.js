@@ -75,9 +75,9 @@ function createWindow() {
   ipcMain.on('WINDOW::ZOOMOUT', () => {
     mainWindow.minimize();
   });
-  ipcMain.on('ENTER_REMOTE_ROOM', (e, remoteCode) => {
-    console.log('ipcMain ENTER_REMOTE_ROOM', remoteCode);
-    shareWindow.webContents.send('ENTER_REMOTE_ROOM', remoteCode);
+  ipcMain.on('ENTER_REMOTE_ROOM', (e, params) => {
+    console.log('ipcMain ENTER_REMOTE_ROOM', params);
+    shareWindow.webContents.send('ENTER_REMOTE_ROOM', params);
   });
   ipcMain.on('LEAVE_REMOTE_ROOM', () => {
     shareWindow.webContents.send('LEAVE_REMOTE_ROOM');

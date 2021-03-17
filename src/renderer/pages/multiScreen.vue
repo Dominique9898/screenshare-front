@@ -72,7 +72,10 @@ export default {
     async getRemoteScreenCode() {
       if (this.isActivate === -1) return;
       this.Code = randomize('A0', 6);
-      ipcRenderer.send('ENTER_REMOTE_ROOM', this.Code);
+      ipcRenderer.send('ENTER_REMOTE_ROOM', {
+        remoteCode: this.Code,
+        screenId: this.selectedScreenId,
+      });
     },
   },
 };
@@ -100,6 +103,7 @@ export default {
   border-radius: 4px;
   text-align: center;
   line-height: 40px;
+  user-select: text;
 }
 #disconnected {
   height: 10px;

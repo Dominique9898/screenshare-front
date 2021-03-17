@@ -6,7 +6,7 @@
 </template>
 
 <script>
-// import screenTools from '../tools/screenTools';
+import screenTools from '../tools/screenTools';
 import socketTools from '../tools/socketTools';
 const { ipcRenderer } = require('electron');
 
@@ -14,11 +14,38 @@ export default {
   name: 'SharedScreen',
   data() {
     return {
+      stream: [],
+      peer: {},
     };
   },
   created() {
     localStorage.removeItem('user');
-    ipcRenderer.on('ENTER_REMOTE_ROOM', async (e, remoteCode) => {
+    ipcRenderer.on('ENTER_REMOTE_ROOM', async (e, params) => {
+      const { screenId, remoteCode } = params;
+      await this.enterRemoteRoom(remoteCode);
+      if (screenId) {
+        this.stream = await this.getScreenMedia(screenId);
+      }
+    });
+    ipcRenderer.on('LEAVE_REMOTE_ROOM', async () => {
+      await this.leaveRemoteRoom();
+    });
+  },
+  methods: {
+    async createPeerConnection(stream) {
+      socketTools.createPeerConnection(stream);
+    },
+    getScreenMedia(screenId) {
+      return screenTools.getStreamByScreenID(screenId);
+    },
+    async leaveRemoteRoom() {
+      let user = localStorage.getItem('user');
+      user = JSON.parse(user);
+      console.log(`client: ${user.userId} leaved, Room: ${user.remoteCode}`);
+      user = await socketTools.leaveRemoteRoom(user);
+      localStorage.setItem('user', JSON.stringify(user));
+    },
+    async enterRemoteRoom(remoteCode) {
       let user = JSON.parse(localStorage.getItem('user')) || {};
       if (user && user.status === 'connected') {
         console.log(`client: ${user.userId} repeat connected`);
@@ -35,18 +62,6 @@ export default {
         console.log(`client: ${user.userId} joined room:${user.remoteCode}`);
       }
       localStorage.setItem('user', JSON.stringify(user));
-    });
-    ipcRenderer.on('LEAVE_REMOTE_ROOM', async () => {
-      let user = localStorage.getItem('user');
-      user = JSON.parse(user);
-      console.log(`client: ${user.userId} leaved, Room: ${user.remoteCode}`);
-      user = await socketTools.leaveRemoteRoom(user);
-      localStorage.setItem('user', JSON.stringify(user));
-    });
-  },
-  methods: {
-    async createPeerConnection(stream) {
-      socketTools.createPeerConnection(stream);
     },
   },
 };

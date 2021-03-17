@@ -51,7 +51,7 @@ export default {
     },
     enterRemoteRoom() {
       const remoteCode = document.getElementById('codeInput').value;
-      ipcRenderer.send('ENTER_REMOTE_ROOM', remoteCode);
+      ipcRenderer.send('ENTER_REMOTE_ROOM', { remoteCode });
     },
     clearPlaceHold() {
       this.placeholderCode = '';

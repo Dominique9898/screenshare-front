@@ -1,4 +1,3 @@
-const { ipcRenderer } = require('electron');
 const io = require('socket.io-client');
 // const host = '121.4.130.218:3000';
 const host = 'http://localhost:3000';
@@ -7,6 +6,7 @@ const DELETE_REMOTE_CODE = 'delete-remote-code';
 const ENTER_REMOTE_ROOM = 'enter-remote-room';
 const LEAVE_REMOTE_ROOM = 'leave-remote-room';
 const SEND_OFFERSDP = 'send-offersdp';
+const USER_JOINED = 'user-joined';
 
 function createSocket() {
   if (!socket) {
@@ -14,9 +14,8 @@ function createSocket() {
     socket.on(DELETE_REMOTE_CODE, (userId) => {
       console.log(`${userId}断开连接`);
     });
-    socket.on(ENTER_REMOTE_ROOM, (remoteId, remoteCode, receviedId) => {
-      ipcRenderer.send('CLIENT_ENTER_REMOTE_ROOM', remoteCode, receviedId);
-      console.log(`${receviedId} 加入 ${remoteId} 的房间`);
+    socket.on(USER_JOINED, (user) => {
+      console.log(`other user ${user.userId} joined`);
     });
   }
 }
