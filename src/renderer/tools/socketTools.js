@@ -1,3 +1,6 @@
+import rtctools from './webRTC';
+// import screenTools from './screenTools';
+
 const io = require('socket.io-client');
 // const host = '121.4.130.218:3000';
 const host = 'http://localhost:3000';
@@ -5,18 +8,69 @@ let socket = null;// 注册Socket监听
 const ENTER_REMOTE_ROOM = 'enter-remote-room';
 const LEAVE_REMOTE_ROOM = 'leave-remote-room';
 const SCREEN_SEND_OFFER = 'screen-send-offer';
-const USER_JOINED = 'user-joined';
-const EXCHANGE_CANDIDATE = 'exchange-candidate';
-const SCREEN_OFFER_TO_CLIENT = 'screen-offer-to-client';
 const CLIENT_ANSWER_TO_SCREEN = 'client-answer-to-screen';
+const GET_ANSWER = 'get-answer';
+const GET_OFFER = 'get-offer';
 
+let peerScreen = null;
+let peerClient = null;
+let stream = null;
+let remoteCode = null;
+const sdpConstraints = {
+  mandatory: {
+    OfferToReceiveAudio: true,
+    OfferToReceiveVideo: true,
+  },
+  optional: [{
+    VoiceActivityDetection: false,
+  }],
+};
 function createSocket() {
   if (!socket) {
     socket = io(host);
-    socket.on(USER_JOINED, (user) => {
-      console.log(`other user ${user.userId} joined`);
+    socket.on(ENTER_REMOTE_ROOM, async () => {
+      console.log('开始建立peerConnection');
+      // 获取Stream,remoteCode
+      // 建立peers
+      peerScreen = rtctools.createPeerConnection();
+      // peerScreen增加Stream
+      await peerScreen.addStream(stream);
+      // 创建offer
+      peerScreen.createOffer(sdpConstraints)
+        .then(async (offer) => {
+          await peerScreen.setLocalDescription(offer);
+          console.log('screen:create/send offer: ', offer);
+          socket.emit(SCREEN_SEND_OFFER, remoteCode, offer); // 发送offer给server
+        }).catch((e) => {
+          throw e;
+        });
+    });
+    socket.on(GET_OFFER, async (remoteCode, offer) => {
+      // peerClient收到offer
+      console.log('client:get offer: ', offer);
+      peerClient = rtctools.createPeerConnection();
+      await peerClient.setRemoteDescription(offer);
+      const answer = await peerClient.createAnswer();
+      await peerClient.setLocalDescription(answer);
+      console.log('client:send answer: ', answer);
+      socket.emit(CLIENT_ANSWER_TO_SCREEN, remoteCode, answer);
+    });
+    socket.on(GET_ANSWER, async (answer) => {
+      // peerScreen收到answer
+      console.log('screen:get answer:', answer);
+      console.log('screen: peer', peerScreen);
+      await peerScreen.setRemoteDescription(answer);
+      peerScreen.onicecandidate = (e) => {
+        console.log('screen: ice: ', e);
+      };
     });
   }
+}
+function setInfo(params) {
+  // eslint-disable-next-line prefer-destructuring
+  remoteCode = params.remoteCode;
+  // eslint-disable-next-line prefer-destructuring
+  stream = params.stream;
 }
 function closeSocket(remoteCode) {
   if (socket) {
@@ -41,58 +95,17 @@ function leaveRemoteRoom(user) {
     }); // 离开房间
   });
 }
-
-function screenSendOffer(remoteCode, offer) {
-  socket.emit(SCREEN_SEND_OFFER, remoteCode, offer);
-}
-function clientSendAnswer(remoteCode, answer) {
-  socket.emit(CLIENT_ANSWER_TO_SCREEN, remoteCode, answer);
-}
-function exchangeCandidate(e) {
-  socket.emit(EXCHANGE_CANDIDATE, {
-    iceCandidate: e.candidate,
-  });
-}
-
-function findOffer(remoteCode) {
-  return new Promise((resolve, reject) => {
-    // Connect to socket.io server
-    createSocket();
-
-    // Send signal for find offer with code
-    socket.emit(SCREEN_OFFER_TO_CLIENT, remoteCode, (offer) => {
-      if (offer) {
-        resolve(offer);
-      } else {
-        // eslint-disable-next-line prefer-promise-reject-errors
-        reject(`Not found offer with code ${remoteCode}`);
-      }
-    });
-  });
-}
-
-function bindScreenPeerWithSocket(peer) {
-  socket.on(CLIENT_ANSWER_TO_SCREEN, async (data) => {
-    console.log('client: 收到answer', data);
-    await peer.setRemoteDescription(data);
-  });
-  socket.on(EXCHANGE_CANDIDATE, async (message) => {
-    if (message.iceCandidate) {
-      try {
-        await peer.addIceCandidate(message.iceCandidate);
-      } catch (e) {
-        console.error('Error adding received ice candidate', e);
-      }
-    }
-  });
-}
+// function createSreenPeerConnection() {
+//   peerScreen = rtctools.createPeerConnection();
+// }
+// function createClientConnection() {
+//   peerClient = rtctools.createPeerConnection();
+// }
 export default {
   closeSocket,
   enterRemoteRoom,
   leaveRemoteRoom,
-  screenSendOffer,
-  exchangeCandidate,
-  bindScreenPeerWithSocket,
-  findOffer,
-  clientSendAnswer,
+  setInfo,
+  // createSreenPeerConnection,
+  // createClientConnection,
 };
