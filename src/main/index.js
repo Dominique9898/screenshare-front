@@ -82,6 +82,9 @@ function createWindow() {
   ipcMain.on('LEAVE_REMOTE_ROOM', () => {
     shareWindow.webContents.send('LEAVE_REMOTE_ROOM');
   });
+  ipcMain.on('OPEN_SHAREWINDOW', () => {
+    shareWindow.show();
+  });
 }
 
 app.on('ready', createWindow);

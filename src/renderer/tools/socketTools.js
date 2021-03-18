@@ -11,7 +11,9 @@ const SCREEN_SEND_OFFER = 'screen-send-offer';
 const CLIENT_ANSWER_TO_SCREEN = 'client-answer-to-screen';
 const GET_ANSWER = 'get-answer';
 const GET_OFFER = 'get-offer';
-
+const SCREEN_TO_CLIENT_CANDIDATE = 'screen-to-client-candidate';
+const CLIENT_TO_SCREEN_CANDIDATE = 'client-to-screen-candidate';
+const { ipcRenderer } = require('electron');
 let peerScreen = null;
 let peerClient = null;
 let stream = null;
@@ -33,8 +35,22 @@ function createSocket() {
       // 获取Stream,remoteCode
       // 建立peers
       peerScreen = rtctools.createPeerConnection();
+      peerScreen.onconnectionstatechange = () => {
+        console.log(
+          'RTC Connection State Change :',
+          peerScreen.connectionState,
+        );
+      };
+      peerScreen.onicecandidate = (e) => {
+        if (e.candidate) {
+          socket.emit(SCREEN_TO_CLIENT_CANDIDATE, remoteCode, e.candidate);
+        }
+      };
       // peerScreen增加Stream
       await peerScreen.addStream(stream);
+      peerScreen.onaddstream = ((e) => {
+        console.log('peerScreen', e);
+      });
       // 创建offer
       peerScreen.createOffer(sdpConstraints)
         .then(async (offer) => {
@@ -49,20 +65,43 @@ function createSocket() {
       // peerClient收到offer
       console.log('client:get offer: ', offer);
       peerClient = rtctools.createPeerConnection();
-      await peerClient.setRemoteDescription(offer);
+      peerClient.onaddstream = (event) => {
+        document.getElementById('remoteVideo').srcObject = event.stream;
+        console.warn('client: onstream', document.getElementById('remoteVideo'));
+        ipcRenderer.send('OPEN_SHAREWINDOW');
+      };
+      console.log('peerClient', peerClient);
+      peerClient.onconnectionstatechange = () => {
+        console.log(
+          'RTC Connection State Change :',
+          peerClient.connectionState,
+        );
+      };
+      peerClient.onicecandidate = (e) => {
+        if (e.candidate) {
+          socket.emit(CLIENT_TO_SCREEN_CANDIDATE, remoteCode, e.candidate);
+        }
+      };
+      await peerClient.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await peerClient.createAnswer();
       await peerClient.setLocalDescription(answer);
       console.log('client:send answer: ', answer);
       socket.emit(CLIENT_ANSWER_TO_SCREEN, remoteCode, answer);
     });
-    socket.on(GET_ANSWER, async (answer) => {
+    socket.on(GET_ANSWER, async (remoteCode, answer) => {
       // peerScreen收到answer
       console.log('screen:get answer:', answer);
-      console.log('screen: peer', peerScreen);
-      await peerScreen.setRemoteDescription(answer);
-      peerScreen.onicecandidate = (e) => {
-        console.log('screen: ice: ', e);
-      };
+      await peerScreen.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+    socket.on(SCREEN_TO_CLIENT_CANDIDATE, async (remoteCode, candidate) => {
+      if (candidate) {
+        console.log('client: get screen ice:', remoteCode, candidate);
+        await peerClient.addIceCandidate(candidate);
+      }
+    });
+    socket.on(CLIENT_TO_SCREEN_CANDIDATE, async (remoteCode, candidate) => {
+      console.log('screen: get client ice:', candidate);
+      await peerScreen.addIceCandidate(candidate);
     });
   }
 }
@@ -95,17 +134,10 @@ function leaveRemoteRoom(user) {
     }); // 离开房间
   });
 }
-// function createSreenPeerConnection() {
-//   peerScreen = rtctools.createPeerConnection();
-// }
-// function createClientConnection() {
-//   peerClient = rtctools.createPeerConnection();
-// }
+
 export default {
   closeSocket,
   enterRemoteRoom,
   leaveRemoteRoom,
   setInfo,
-  // createSreenPeerConnection,
-  // createClientConnection,
 };
