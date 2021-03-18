@@ -2,8 +2,8 @@ import rtctools from './webRTC';
 // import screenTools from './screenTools';
 
 const io = require('socket.io-client');
-// const host = '121.4.130.218:3000';
-const host = 'http://localhost:3000';
+const host = '121.4.130.218:3000';
+// const host = 'http://localhost:3000';
 let socket = null;// 注册Socket监听
 const ENTER_REMOTE_ROOM = 'enter-remote-room';
 const LEAVE_REMOTE_ROOM = 'leave-remote-room';
