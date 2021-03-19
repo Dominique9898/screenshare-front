@@ -47,6 +47,7 @@ function createSocket() {
         }
       };
       // peerScreen增加Stream
+      console.log('stream', stream);
       await peerScreen.addStream(stream);
       peerScreen.onaddstream = ((e) => {
         console.log('peerScreen', e);
@@ -100,8 +101,10 @@ function createSocket() {
       }
     });
     socket.on(CLIENT_TO_SCREEN_CANDIDATE, async (remoteCode, candidate) => {
-      console.log('screen: get client ice:', candidate);
-      await peerScreen.addIceCandidate(candidate);
+      if (candidate) {
+        console.log('screen: get client ice:', candidate);
+        await peerScreen.addIceCandidate(candidate);
+      }
     });
   }
 }
