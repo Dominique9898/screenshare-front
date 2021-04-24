@@ -28,11 +28,18 @@ const getDisplayMedia = () => {
     .catch((err) => { console.log(err); });
 };
 */
-
-const getStreamByScreenID = async (screenID) => {
-  // getDisplayMedia 获取电脑屏幕的视频流，不过暂时无法获取音频媒体流，如果需要音频流，手动添加到轨道内，使之同步播放
+const getVideoStream = async () => {
   const stream = await navigator.mediaDevices.getUserMedia({
-    audio: false,
+    audio: true,
+    video: {
+      width: 1280,
+      height: 720,
+    },
+  });
+  return stream;
+};
+const getStreamByScreenID = async (screenID) => {
+  const stream = await navigator.mediaDevices.getUserMedia({
     video: {
       mandatory: {
         chromeMediaSourceId: screenID,
@@ -49,4 +56,5 @@ const getStreamByScreenID = async (screenID) => {
 export default {
   getAllStream,
   getStreamByScreenID,
+  getVideoStream,
 };

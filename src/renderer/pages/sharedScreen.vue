@@ -1,6 +1,7 @@
 <template>
   <div class="sharedScreen">
 <!--    <video id="localVideo" class="video" autoplay="autoplay"></video>-->
+    <video id="remoteScreen" class="video" autoplay="autoplay"></video>
     <video id="remoteVideo" class="video" autoplay="autoplay"></video>
   </div>
 </template>
@@ -24,11 +25,8 @@ export default {
     ipcRenderer.on('ENTER_REMOTE_ROOM', async (e, params) => {
       const { screenId, remoteCode } = params;
       if (screenId) {
-        const stream = await screenTools.getStreamByScreenID(screenId);
-        socketTools.setInfo({
-          stream,
-          remoteCode,
-        });
+        const localScreenStream = await screenTools.getStreamByScreenID(screenId);
+        socketTools.setInfo(localScreenStream, remoteCode);
       }
       await this.enterRemoteRoom(remoteCode);
     });
@@ -67,8 +65,24 @@ export default {
 </script>
 
 <style scoped>
-.video {
+.sharedScreen {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
+#remoteScreen{
   width: 100%;
   height: 100%;
+  position: absolute;
+}
+#remoteVideo{
+  width: 150px;
+  height: 150px;
+  right: 0;
+  bottom: 0;
+  position: absolute;
+  z-index: 999;
 }
 </style>

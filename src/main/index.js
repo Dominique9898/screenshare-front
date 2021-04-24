@@ -84,6 +84,7 @@ function createWindow() {
   });
   ipcMain.on('OPEN_SHAREWINDOW', () => {
     shareWindow.show();
+    mainWindow.hide();
   });
 }
 
