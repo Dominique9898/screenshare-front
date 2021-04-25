@@ -72,7 +72,7 @@ export default {
     async getRemoteScreenCode() {
       if (this.isActivate === -1) return;
       this.Code = randomize('A0', 6);
-      ipcRenderer.send('ENTER_REMOTE_ROOM', {
+      ipcRenderer.send('CREATE_REMOTE_ROOM', {
         remoteCode: this.Code,
         screenId: this.selectedScreenId,
       });

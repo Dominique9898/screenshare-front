@@ -46,7 +46,6 @@ function createSocket() {
       // 建立peers
       screenSenderPeer = rtctools.createPeerConnection();
       videoSenderPeer = rtctools.createPeerConnection();
-      localVideoStream = await screenTools.getVideoStream();
       screenSenderPeer.onconnectionstatechange = () => {
         console.log(
           'screenSenderPeer Connection State Change :',
@@ -79,6 +78,9 @@ function createSocket() {
       });
       videoSenderPeer.onaddstream = (e) => {
         console.log('videoSenderPeer', e);
+        document.getElementById('RemoteVideo').srcObject = e.stream;
+        document.getElementById('RemoteVideo').style.display = 'block';
+        document.getElementById('warning').style.display = 'none';
       };
       // 创建offer
       screenSenderPeer.createOffer(sdpConstraints)
@@ -105,7 +107,7 @@ function createSocket() {
       screenClientPeer.onaddstream = (event) => {
         document.getElementById('remoteScreen').srcObject = event.stream;
         console.warn('client: screen onstream', document.getElementById('remoteScreen'));
-        ipcRenderer.send('OPEN_SHAREWINDOW');
+        ipcRenderer.send('OPEN_SHARE_WINDOW');
       };
       console.log('screenClientPeer', screenClientPeer);
       screenClientPeer.onconnectionstatechange = () => {
@@ -134,7 +136,7 @@ function createSocket() {
       videoClientPeer.onaddstream = (event) => {
         document.getElementById('remoteVideo').srcObject = event.stream;
         console.warn('client: onstream', document.getElementById('remoteVideo'));
-        ipcRenderer.send('OPEN_SHAREWINDOW');
+        ipcRenderer.send('OPEN_SHARE_WINDOW');
       };
       console.log('videoClientPeer', videoClientPeer);
       videoClientPeer.onconnectionstatechange = () => {
@@ -170,9 +172,9 @@ function createSocket() {
         await screenClientPeer.addIceCandidate(candidate);
       }
     });
-    socket.on(SCREEN_TO_CLIENT_SCREEN_CANDIDATE, async (remoteCode, candidate) => {
+    socket.on(SCREEN_TO_CLIENT_VIDEO_CANDIDATE, async (remoteCode, candidate) => {
       if (candidate) {
-        console.log('client: get screen ice:', remoteCode, candidate);
+        console.log('client: get video ice:', remoteCode, candidate);
         await videoClientPeer.addIceCandidate(candidate);
       }
     });
@@ -180,7 +182,6 @@ function createSocket() {
       if (candidate) {
         console.log('screen: get client screen ice:', candidate);
         await screenSenderPeer.addIceCandidate(candidate);
-        await videoSenderPeer.addIceCandidate(candidate);
       }
     });
     socket.on(CLIENT_TO_SCREEN_VIDEO_CANDIDATE, async (remoteCode, candidate) => {
@@ -191,9 +192,10 @@ function createSocket() {
     });
   }
 }
-function setInfo(_localScreenStream, _remoteCode) {
+function setInfo(_localScreenStream, _localVideoStream, _remoteCode) {
   remoteCode = _remoteCode;
   localScreenStream = _localScreenStream;
+  localVideoStream = _localVideoStream;
 }
 function closeSocket(remoteCode) {
   if (socket) {

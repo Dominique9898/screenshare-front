@@ -21,6 +21,11 @@ export default new Router({
       component: require('../pages/sharedScreen').default,
     },
     {
+      path: '/localStream',
+      name: 'LocalStream',
+      component: require('../pages/localStreamPage').default,
+    },
+    {
       path: '*',
       redirect: '/',
     },

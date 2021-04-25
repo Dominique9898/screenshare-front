@@ -7,7 +7,6 @@
 </template>
 
 <script>
-import screenTools from '../tools/screenTools';
 import socketTools from '../tools/socketTools';
 const { ipcRenderer, remote } = require('electron');
 
@@ -23,11 +22,8 @@ export default {
   created() {
     localStorage.removeItem('user');
     ipcRenderer.on('ENTER_REMOTE_ROOM', async (e, params) => {
-      const { screenId, remoteCode } = params;
-      if (screenId) {
-        const localScreenStream = await screenTools.getStreamByScreenID(screenId);
-        socketTools.setInfo(localScreenStream, remoteCode);
-      }
+      const { remoteCode } = params;
+      console.log('sharedScreen', remoteCode);
       await this.enterRemoteRoom(remoteCode);
     });
     ipcRenderer.on('LEAVE_REMOTE_ROOM', async () => {

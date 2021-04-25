@@ -1,5 +1,4 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
-import socketTools from '../renderer/tools/socketTools'; // eslint-disable-line
 
 /**
  * Set `__static` path to static files in production
@@ -11,14 +10,17 @@ if (process.env.NODE_ENV !== 'development') {
 
 let mainWindow;
 let shareWindow;
+let localShareWindow;
 const winURL = process.env.NODE_ENV === 'development'
   ? 'http://localhost:9080'
   : `file://${__dirname}/index.html`;
 const sharedScreenURL = process.env.NODE_ENV === 'development'
   ? 'http://localhost:9080/#/sharedScreen'
   : `file://${__dirname}/index.html`;
-
-function createShareWindow() {
+const localScreenURL = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:9080/#/localStream'
+  : `file://${__dirname}/index.html`;
+function createShareWindow(params) {
   const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();
   shareWindow = new BrowserWindow({
@@ -26,8 +28,8 @@ function createShareWindow() {
     height: primaryDisplay.bounds.height,
     x: primaryDisplay.bounds.x,
     y: primaryDisplay.bounds.y,
-    show: false,
     useContentSize: true,
+    show: false,
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true,
@@ -35,6 +37,40 @@ function createShareWindow() {
   });
   shareWindow.webContents.openDevTools();
   shareWindow.loadURL(sharedScreenURL);
+  shareWindow.on('ready-to-show', () => {
+    shareWindow.show();
+    shareWindow.webContents.send('ENTER_REMOTE_ROOM', params);
+  });
+  shareWindow.on('close', () => {
+    shareWindow = null;
+  });
+}
+function createLocalShareWindow(params) {
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  localShareWindow = new BrowserWindow({
+    width: 232,
+    height: 200, // 160 + 130 = 290
+    x: primaryDisplay.bounds.width - 260,
+    y: 300,
+    frame: false,
+    show: false,
+    resizable: false,
+    movable: true,
+    webPreferences: {
+      nodeIntegration: true,
+      enableRemoteModule: true,
+    },
+  });
+  localShareWindow.webContents.openDevTools();
+  localShareWindow.loadURL(localScreenURL);
+  localShareWindow.on('ready-to-show', () => {
+    localShareWindow.show();
+    localShareWindow.webContents.send('CREATE_REMOTE_ROOM', params);
+  });
+  localShareWindow.on('close', () => {
+    localShareWindow = null;
+  });
 }
 function createWindow() {
   /**
@@ -55,12 +91,8 @@ function createWindow() {
       enableRemoteModule: true,
     },
   });
-  createShareWindow();
   mainWindow.loadURL(winURL);
   mainWindow.webContents.closeDevTools();
-  shareWindow.on('closed', () => {
-    shareWindow = null;
-  });
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -75,15 +107,17 @@ function createWindow() {
   ipcMain.on('WINDOW::ZOOMOUT', () => {
     mainWindow.minimize();
   });
-  ipcMain.on('ENTER_REMOTE_ROOM', (e, params) => {
+  ipcMain.on('CREATE_REMOTE_ROOM', async (e, params) => {
+    createLocalShareWindow(params);
+  });
+  ipcMain.on('ENTER_REMOTE_ROOM', async (e, params) => {
     console.log('ipcMain ENTER_REMOTE_ROOM', params);
-    shareWindow.webContents.send('ENTER_REMOTE_ROOM', params);
+    createShareWindow(params);
   });
   ipcMain.on('LEAVE_REMOTE_ROOM', () => {
     shareWindow.webContents.send('LEAVE_REMOTE_ROOM');
   });
-  ipcMain.on('OPEN_SHAREWINDOW', () => {
-    shareWindow.show();
+  ipcMain.on('OPEN_SHARE_WINDOW', () => {
     mainWindow.hide();
   });
 }
